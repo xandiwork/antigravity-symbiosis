@@ -1,0 +1,11 @@
+{
+  "name": "antigravity-symbiosis",
+  "version": "1.0.0",
+  "description": "Antigravity IDE & Agent Symbiosis MCP Server",
+  "main": "src/mcp-server.js",
+  "scripts": {
+    "start": "node src/mcp-server.js"
+  },
+  "author": "Antigravity",
+  "license": "MIT"
+}
