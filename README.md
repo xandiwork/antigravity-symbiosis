@@ -8,11 +8,13 @@
 
 O **Symbiosis** é a ponte definitiva entre a sua IDE (o ambiente que você manipula, como Cursor ou VSCode) e o Agente Antigravity (a Inteligência Artificial autônoma).
 
-## Por que foi criado? (O Problema)
+## Por que foi criado? (A História e o Problema)
 
-Atualmente, trabalhar com IA generativa para código exige uma constante "dança" de copiar e colar. Você precisa explicar o contexto do seu projeto para o chat, colar os arquivos relevantes, receber a resposta, colar de volta na IDE e testar. Esse processo é tedioso, fragmentado e extremamente suscetível a erros de versão e sobreposição (dirty writes).
+No passado, assistentes de IA (como a versão original do Antigravity) eram nativamente acoplados e integrados às IDEs. No entanto, com a evolução da tecnologia, o Google e outras gigantes decidiram separar os agentes, transformando-os em processos autônomos que rodam fora da IDE para ganhar mais poder computacional e liberdade de arquitetura.
 
-O **Symbiosis** elimina esse isolamento. Ele transforma o Antigravity de um "chat externo" em um co-piloto nativo que respira o mesmo ar e enxerga a mesma tela que o desenvolvedor, criando um loop de feedback autônomo e perfeito.
+Embora o Agente tenha ficado mais inteligente, nós, desenvolvedores, perdemos a comodidade. Trabalhar com IA generativa para código voltou a exigir uma constante "dança" de copiar e colar: você precisa explicar o contexto do seu projeto para um chat externo, colar os arquivos relevantes, receber a resposta, colar de volta na IDE e testar. Esse processo se tornou tedioso, fragmentado e extremamente suscetível a erros de versão e sobreposição (dirty writes).
+
+O **Symbiosis** nasceu exatamente dessa dor. Ele elimina esse isolamento reconectando as pontes. Ele transforma o Antigravity moderno (ou qualquer agente) novamente em um co-piloto nativo que respira o mesmo ar e enxerga a mesma tela que o desenvolvedor, criando um loop de feedback autônomo e perfeito, mas sem abrir mão da sua inteligência desacoplada.
 
 ## Principais Benefícios e Dores Resolvidas
 

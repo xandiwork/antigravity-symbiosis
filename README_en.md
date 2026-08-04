@@ -8,11 +8,13 @@
 
 **Symbiosis** is the ultimate bridge between your IDE (the environment you manipulate, such as Cursor or VSCode) and the Antigravity Agent (an autonomous Artificial Intelligence).
 
-## Why was it created? (The Problem)
+## Why was it created? (The History and The Problem)
 
-Currently, working with generative AI for code requires a constant "dance" of copying and pasting. You need to explain the context of your project to the chat, paste the relevant files, get the response, paste it back into the IDE, and test it. This process is tedious, fragmented, and extremely prone to version conflicts and dirty writes.
+In the past, AI assistants (like the original version of Antigravity) were natively coupled and integrated directly into IDEs. However, as technology evolved, Google and other tech giants decided to separate the agents, transforming them into autonomous processes running outside the IDE to gain more computational power and architectural freedom.
 
-**Symbiosis** eliminates this isolation. It transforms Antigravity from an "external chat" into a native co-pilot that breathes the same air and sees the same screen as the developer, creating a flawless and autonomous feedback loop.
+Although the Agent became smarter, we, developers, lost the convenience. Working with generative AI for code went back to requiring a constant "dance" of copying and pasting: you need to explain the context of your project to an external chat, paste the relevant files, get the response, paste it back into the IDE, and test it. This process became tedious, fragmented, and extremely prone to version conflicts and dirty writes.
+
+**Symbiosis** was born exactly from this pain point. It eliminates this isolation by reconnecting the bridges. It transforms modern Antigravity (or any other agent) back into a native co-pilot that breathes the same air and sees the same screen as the developer, creating a flawless and autonomous feedback loop without sacrificing its decoupled intelligence.
 
 ## Key Benefits and Pain Points Solved
 
