@@ -81,6 +81,10 @@ async function handleEditFile(args) {
 async function handleRunCommand(args) {
   const cmd = args.command;
   
+  if (/[&|;<>$`\\]/.test(cmd)) {
+    throw new Error(`Command blocked. Shell injection meta-characters detected.`);
+  }
+  
   if (!config.commandWhitelist.some(allowed => cmd.startsWith(allowed))) {
     throw new Error(`Command blocked. Not in whitelist. Allowed commands: ${config.commandWhitelist.join(', ')}`);
   }
