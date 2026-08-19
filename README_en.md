@@ -18,10 +18,10 @@ Although the Agent became smarter, we, developers, lost the convenience. Working
 
 ## Key Benefits and Pain Points Solved
 
-- **End of Copy and Paste:** The Antigravity Agent reads and edits files directly in your IDE via MCP, respecting locks so it never corrupts files you are manually editing.
-- **Always Updated Context (Watcher):** If you modify code, the Agent is proactively notified. It understands what you are doing in real-time, without you needing to type a command in the chat.
+- **End of Copy and Paste:** The agent reads and edits workspace files via MCP, respecting the `// NEURAL_LOCK` marker and aborting the write if the file changes mid-edit.
+- **Always Updated Context (Watcher):** When you save a file, the server sends an MCP notification to the agent and records the change in the context, telling your edits apart from the agent's own.
 - **Automatic Auditing (Scribe):** Every autonomous step, altered file, or terminal command executed by the Agent is silently audited and documented in your Obsidian. You have a perfect neural log of *everything* the AI did in your absence.
-- **Safe Execution:** Terminal commands run strictly within an approved whitelist, ensuring the AI does not make dangerous changes to the local infrastructure without supervision.
+- **Safe Execution:** Commands run without a shell, only when they exactly match the allowlist (`git status`, `git diff`, `ls` and pre-approved options), with a timeout and always inside the workspace.
 
 ## Who is this for?
 
@@ -36,15 +36,25 @@ The system is divided into three main pillars that operate in harmony:
 
 1. **MCP Server (`src/mcp-server.js`)**
    - The heart of Symbiosis. It is through this server that the Antigravity Agent connects to your IDE using the Model Context Protocol (MCP).
-   - Provides robust tools for deep file reading (token-aware), strict and safe execution of terminal commands, and precise code block editing.
+   - Exposed tools:
+
+     | Tool | What it does |
+     |---|---|
+     | `symbiosis_get_context` | Lists a workspace folder and the recent changes seen by the watcher (origin `agent` or `external`). |
+     | `symbiosis_read_file` | Reads a text file from the workspace (1 MB limit). |
+     | `symbiosis_edit_file` | Replaces the content of an existing file with an atomic write, respecting the lock. |
+     | `symbiosis_run_command` | Runs an allowlisted command, without a shell, inside the workspace. |
+
+   - Every tool is confined to the `SYMBIOSIS_WORKSPACE` folder (symlinks included) and refuses `.env` and `.git/`.
 
 2. **Watcher (`src/watcher.js`)**
-   - The watchful eye. Observes file system and IDE events.
-   - Triggers proactive notifications to the agent when a file is saved or modified by the human developer, allowing the AI to react immediately (via MCP Notifications).
+   - The watchful eye. Runs inside the server process and watches the workspace file system (ignoring `.git`, `node_modules` and the log folder).
+   - Batches changes (500 ms debounce) and sends `notifications/message` to the agent when a file is created, changed or removed by anyone other than the agent itself.
+   - Can also run standalone for debugging: `node src/watcher.js <folder>`.
 
 3. **Scribe (`src/scribe.js`)**
    - The system historian (Logbook).
-   - Audits the Agent's actions in real-time and saves everything in Markdown format, following a structured note-taking standard. Notes are saved directly in Obsidian for persistent long-term memory.
+   - Records every agent action and every external change in a daily Markdown file (`_NEURAL_LOG_YYYY-MM-DD.md`) in the `SYMBIOSIS_KNOWLEDGE_PATH` folder, which can be an Obsidian vault.
 
 ## Requirements
 - Node.js (v18+)
@@ -58,7 +68,9 @@ The system is divided into three main pillars that operate in harmony:
    ```bash
    cp .env.example .env
    ```
-3. Configure the `SYMBIOSIS_KNOWLEDGE_PATH` variable in the `.env` file with the absolute path to your Obsidian vault.
+3. Set the environment variables (the server does not load `.env` by itself; pass them through the `env` block of the MCP config):
+   - `SYMBIOSIS_WORKSPACE`: the project folder the agent may access (default: the folder where the server starts).
+   - `SYMBIOSIS_KNOWLEDGE_PATH`: the Scribe log folder, e.g. your Obsidian vault.
 4. In your IDE's MCP configuration file (e.g., Cursor), add the server pointing to the main script:
    ```json
    {
@@ -71,15 +83,16 @@ The system is divided into three main pillars that operate in harmony:
    }
    ```
 5. **Native Integration with Antigravity Agent:** 
-   For the Antigravity agent itself to use the tools automatically in your projects, create an `mcp_config.json` file inside the `.agents/` folder at the root of your current workspace with the following content:
+   For the Antigravity agent itself to use the tools automatically in your projects, create an `mcp_config.json` file inside the `.agents/` folder at the root of your current workspace (e.g., `C:/my-project/.agents/mcp_config.json`) with the following content:
    ```json
    {
      "mcpServers": {
        "symbiosis": {
          "command": "node",
-         "args": ["path/to/antigravity-symbiosis/src/mcp-server.js"],
+         "args": ["C:/path/to/antigravity-symbiosis/src/mcp-server.js"],
          "env": {
-           "SYMBIOSIS_KNOWLEDGE_PATH": "Path/to/your/Obsidian"
+           "SYMBIOSIS_WORKSPACE": "C:/my-project",
+           "SYMBIOSIS_KNOWLEDGE_PATH": "C:/path/to/your/Obsidian/knowledge"
          }
        }
      }
@@ -92,7 +105,23 @@ To start manually and test the log outputs:
 ```bash
 npm start
 ```
-The server will begin listening for JSON-RPC requests via stdio and the Scribe will start monitoring the knowledge base.
+The server listens for JSON-RPC requests over stdio; the watcher starts watching the workspace as soon as the client sends `initialize`.
+
+## Tests
+
+```bash
+npm test
+```
+
+The suite (`node:test`, no dependencies) covers path traversal (`../`, absolute paths, symlinks), `.env` and `.git/`, the lock before and during the write, newline and meta-character injection, the exact allowlist (`lsof` does not pass as `ls`), `cwd` outside the workspace, and an end-to-end protocol test with a watcher notification. CI runs the tests on Node 18, 20 and 22, plus gitleaks.
+
+## Known limitations
+
+- The "IDE context" comes from the file system: the server does not see open tabs, the cursor or unsaved buffers.
+- `symbiosis_edit_file` replaces the whole file; there is no partial editing.
+- On Linux with Node 18, recursive `fs.watch` is unavailable: the watcher only watches the workspace root (Node 20+ watches everything).
+- The MCP protocol (version `2024-11-05`) is implemented by hand, without the official SDK.
+- On Windows, `ls` only works if it is on the PATH (e.g. with Git for Windows).
 
 ---
 *Developed and maintained under the Antigravity infrastructure.*

@@ -18,10 +18,10 @@ O **Symbiosis** nasceu exatamente dessa dor. Ele elimina esse isolamento reconec
 
 ## Principais Benefícios e Dores Resolvidas
 
-- **Fim do Copia e Cola:** O Agente Antigravity lê e edita os arquivos diretamente na sua IDE via MCP, respeitando as marcações (locks) para nunca corromper arquivos que você está editando manualmente.
-- **Contexto Sempre Atualizado (Watcher):** Se você modifica um código, o Agente é notificado proativamente. Ele entende o que você está fazendo em tempo real, sem que você precise digitar um comando no chat.
+- **Fim do Copia e Cola:** O agente lê e edita os arquivos do workspace via MCP, respeitando a trava `// NEURAL_LOCK` e abortando a gravação se o arquivo mudar no meio da edição.
+- **Contexto Sempre Atualizado (Watcher):** Quando você salva um arquivo, o servidor envia uma notificação MCP ao agente e registra a mudança no contexto, separando o que foi editado por você do que foi editado pelo próprio agente.
 - **Auditoria Automática (Scribe):** Cada passo autônomo, arquivo alterado ou comando de terminal executado pelo Agente é auditado e documentado silenciosamente no seu Obsidian. Você tem um log neural perfeito de *tudo* que a IA fez na sua ausência.
-- **Execução Segura:** Comandos de terminal rodam estritamente dentro de uma whitelist aprovada, garantindo que a IA não faça alterações perigosas na infraestrutura local sem supervisão.
+- **Execução Segura:** Comandos rodam sem shell, só se baterem exatamente com a allowlist (`git status`, `git diff`, `ls` e opções pré-aprovadas), com tempo limite e sempre dentro do workspace.
 
 ## Para quem é?
 
@@ -36,15 +36,25 @@ O sistema é dividido em três pilares principais que operam em harmonia:
 
 1. **MCP Server (`src/mcp-server.js`)**
    - O coração do Symbiosis. É através deste servidor que o Agente Antigravity se conecta à sua IDE utilizando o Model Context Protocol (MCP).
-   - Fornece ferramentas robustas para leitura profunda de arquivos (token-aware), execução estrita e segura de comandos de terminal, e edição precisa de blocos de código.
+   - Ferramentas expostas:
+
+     | Ferramenta | O que faz |
+     |---|---|
+     | `symbiosis_get_context` | Lista uma pasta do workspace e as mudanças recentes detectadas pelo watcher (origem `agent` ou `external`). |
+     | `symbiosis_read_file` | Lê um arquivo de texto do workspace (limite de 1 MB). |
+     | `symbiosis_edit_file` | Substitui o conteúdo de um arquivo existente com gravação atômica, respeitando a trava. |
+     | `symbiosis_run_command` | Executa um comando da allowlist, sem shell, dentro do workspace. |
+
+   - Todas as ferramentas ficam confinadas à pasta `SYMBIOSIS_WORKSPACE` (links simbólicos incluídos) e recusam `.env` e `.git/`.
 
 2. **Watcher (`src/watcher.js`)**
-   - O olho atento. Observa eventos do sistema de arquivos e da própria IDE.
-   - Dispara notificações proativas para o agente quando um arquivo é salvo ou modificado pelo desenvolvedor humano, permitindo que a IA reaja imediatamente (via MCP Notifications).
+   - O olho atento. Roda dentro do processo do servidor e observa o sistema de arquivos do workspace (ignorando `.git`, `node_modules` e a pasta de logs).
+   - Agrupa as mudanças (debounce de 500 ms) e envia `notifications/message` ao agente quando um arquivo é criado, alterado ou removido por alguém que não o próprio agente.
+   - Também pode rodar sozinho para depuração: `node src/watcher.js <pasta>`.
 
 3. **Scribe (`src/scribe.js`)**
    - O historiador do sistema (Diário de Bordo).
-   - Audita em tempo real as ações do Agente e salva tudo em formato Markdown, seguindo um padrão estruturado de anotação. As anotações são salvas diretamente no Obsidian para memória persistente de longo prazo.
+   - Registra cada ação do agente e cada mudança externa em um arquivo Markdown diário (`_NEURAL_LOG_AAAA-MM-DD.md`) na pasta `SYMBIOSIS_KNOWLEDGE_PATH`, que pode ser um cofre do Obsidian.
 
 ## Requisitos
 - Node.js (v18+)
@@ -58,7 +68,9 @@ O sistema é dividido em três pilares principais que operam em harmonia:
    ```bash
    cp .env.example .env
    ```
-3. Configure a variável `SYMBIOSIS_KNOWLEDGE_PATH` no arquivo `.env` com o caminho absoluto do seu cofre do Obsidian.
+3. Defina as variáveis de ambiente (o servidor não lê o `.env` sozinho; passe-as pelo bloco `env` da configuração MCP):
+   - `SYMBIOSIS_WORKSPACE`: pasta do projeto que o agente pode acessar (padrão: pasta onde o servidor é iniciado).
+   - `SYMBIOSIS_KNOWLEDGE_PATH`: pasta dos logs do Scribe, por exemplo o seu cofre do Obsidian.
 4. No arquivo de configuração do MCP da sua IDE (ex: Cursor), adicione o servidor apontando para o script principal:
    ```json
    {
@@ -79,6 +91,7 @@ O sistema é dividido em três pilares principais que operam em harmonia:
          "command": "node",
          "args": ["C:/caminho/para/antigravity-symbiosis/src/mcp-server.js"],
          "env": {
+           "SYMBIOSIS_WORKSPACE": "C:/meu-projeto",
            "SYMBIOSIS_KNOWLEDGE_PATH": "C:/caminho/para/seu/Obsidian/knowledge"
          }
        }
@@ -92,7 +105,23 @@ Para iniciar manualmente e testar as saídas de log:
 ```bash
 npm start
 ```
-O servidor começará a escutar requisições JSON-RPC via stdio e o Scribe iniciará o monitoramento da base de conhecimento.
+O servidor escuta requisições JSON-RPC via stdio; o watcher começa a observar o workspace assim que o cliente envia `initialize`.
+
+## Testes
+
+```bash
+npm test
+```
+
+A suíte (`node:test`, sem dependências) cobre travessia de caminho (`../`, caminho absoluto, link simbólico), `.env` e `.git/`, a trava antes e durante a gravação, injeção por quebra de linha e metacaracteres, allowlist exata (`lsof` não passa por `ls`), `cwd` fora do workspace, e um teste ponta a ponta do protocolo com notificação do watcher. O CI roda os testes no Node 18, 20 e 22, além do gitleaks.
+
+## Limitações conhecidas
+
+- O "contexto da IDE" vem do sistema de arquivos: o servidor não enxerga abas abertas, cursor ou buffers não salvos.
+- `symbiosis_edit_file` substitui o arquivo inteiro; não há edição por trechos.
+- No Linux com Node 18, `fs.watch` recursivo não existe: o watcher observa só a raiz do workspace (Node 20+ observa tudo).
+- O protocolo MCP (versão `2024-11-05`) é implementado à mão, sem o SDK oficial.
+- No Windows, `ls` só funciona se estiver no PATH (por exemplo, com o Git for Windows).
 
 ---
 *Desenvolvido e mantido sob a infraestrutura Antigravity.*

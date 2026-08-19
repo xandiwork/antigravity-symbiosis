@@ -3,9 +3,32 @@
   "version": "1.0.0",
   "description": "Antigravity IDE & Agent Symbiosis MCP Server",
   "main": "src/mcp-server.js",
-  "scripts": {
-    "start": "node src/mcp-server.js"
+  "engines": {
+    "node": ">=18.0.0"
   },
-  "author": "Antigravity",
-  "license": "MIT"
+  "scripts": {
+    "start": "node src/mcp-server.js",
+    "test": "node --test",
+    "check:terms": "node scripts/check-blocked-terms.js",
+    "hooks:install": "git config core.hooksPath .githooks"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xandiwork/antigravity-symbiosis.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "antigravity",
+    "ide-integration",
+    "ai-agent",
+    "obsidian",
+    "watcher"
+  ],
+  "author": "Alexandre Oliveira",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xandiwork/antigravity-symbiosis/issues"
+  },
+  "homepage": "https://github.com/xandiwork/antigravity-symbiosis#readme"
 }
