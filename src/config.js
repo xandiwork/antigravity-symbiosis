@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 
 const config = {
-  knowledgePath: process.env.SYMBIOSIS_KNOWLEDGE_PATH || path.join('D:', 'Trabalho', 'ANTIGRAVITY', 'knowledge'),
+  knowledgePath: process.env.SYMBIOSIS_KNOWLEDGE_PATH || path.join(process.cwd(), 'knowledge'),
   commandWhitelist: ['git status', 'git diff', 'dir', 'ls'],
   lockString: '// NEURAL_LOCK'
 };

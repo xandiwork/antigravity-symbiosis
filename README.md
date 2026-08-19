@@ -71,15 +71,15 @@ O sistema é dividido em três pilares principais que operam em harmonia:
    }
    ```
 5. **Integração Nativa com o Agente Antigravity:** 
-   Para que o próprio agente Antigravity utilize as ferramentas automaticamente nos seus projetos, crie um arquivo `mcp_config.json` dentro da pasta `.agents/` na raiz do seu workspace atual (ex: `D:/Pessoal/.agents/mcp_config.json`) com o seguinte conteúdo:
+   Para que o próprio agente Antigravity utilize as ferramentas automaticamente nos seus projetos, crie um arquivo `mcp_config.json` dentro da pasta `.agents/` na raiz do seu workspace atual (ex: `C:/meu-projeto/.agents/mcp_config.json`) com o seguinte conteúdo:
    ```json
    {
      "mcpServers": {
        "symbiosis": {
          "command": "node",
-         "args": ["D:/Trabalho/ANTIGRAVITY/antigravity-symbiosis/src/mcp-server.js"],
+         "args": ["C:/caminho/para/antigravity-symbiosis/src/mcp-server.js"],
          "env": {
-           "SYMBIOSIS_KNOWLEDGE_PATH": "Caminho/do/seu/Obsidian"
+           "SYMBIOSIS_KNOWLEDGE_PATH": "C:/caminho/para/seu/Obsidian/knowledge"
          }
        }
      }
