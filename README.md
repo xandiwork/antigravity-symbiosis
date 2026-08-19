@@ -44,7 +44,7 @@ O sistema é dividido em três pilares principais que operam em harmonia:
 
 3. **Scribe (`src/scribe.js`)**
    - O historiador do sistema (Diário de Bordo).
-   - Audita em tempo real as ações do Agente e salva tudo em formato Markdown, aderindo às diretrizes do `NeuralVault`. As anotações são salvas diretamente no Obsidian para memória persistente de longo prazo.
+   - Audita em tempo real as ações do Agente e salva tudo em formato Markdown, seguindo um padrão estruturado de anotação. As anotações são salvas diretamente no Obsidian para memória persistente de longo prazo.
 
 ## Requisitos
 - Node.js (v18+)
@@ -95,4 +95,4 @@ npm start
 O servidor começará a escutar requisições JSON-RPC via stdio e o Scribe iniciará o monitoramento da base de conhecimento.
 
 ---
-*Desenvolvido e mantido sob a infraestrutura do Antigravity / NeuralVault.*
+*Desenvolvido e mantido sob a infraestrutura Antigravity.*
